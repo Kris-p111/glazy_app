@@ -30,6 +30,11 @@ namespace ASTEM_DB.Services
             var response = await _httpClient.PostAsync($"{ApiBase}/search/image", content);
             var json = await response.Content.ReadAsStringAsync();
 
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception($"Server returned {(int)response.StatusCode} {response.StatusCode}: {json}");
+            }
+
             using var doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
 

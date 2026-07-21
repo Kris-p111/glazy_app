@@ -231,6 +231,8 @@ namespace ASTEM_DB.ViewModels
             set => this.RaiseAndSetIfChanged(ref _aiResolvedSearchPrompt, value);
         }
 
+        private bool _aiIsImageSearching;
+        public bool AiIsImageSearching
         {
             get => _aiIsImageSearching;
             set => this.RaiseAndSetIfChanged(ref _aiIsImageSearching, value);
@@ -299,7 +301,7 @@ namespace ASTEM_DB.ViewModels
                 var response = await RunLocalAiSearchAsync(resolvedPrompt, cancellationToken);
                 cancellationToken.ThrowIfCancellationRequested();
                 var idToScore = response.Results.ToDictionary(result => result.Id, result => result.FinalScore);
-                var items = await _db.GetCardItemsByIdsAsync(response.Results.Select(result => result.Id));
+                var items = await Task.WhenAll(response.Results.Select(result => _db.GetCardItemByIdAsync(result.Id)));
                 cancellationToken.ThrowIfCancellationRequested();
 
                 CardItems.Clear();
@@ -365,6 +367,7 @@ namespace ASTEM_DB.ViewModels
             AiSearchImagePath = imagePath;
             AiSearchImageLabel = $"Image: {fileName}";
             AiSearchStatus = "Image selected. Searching...";
+            CardItems.Clear();
             AiChatMessages.Add(new AiChatMessageViewModel("You", $"Image: {fileName}"));
 
             try 
